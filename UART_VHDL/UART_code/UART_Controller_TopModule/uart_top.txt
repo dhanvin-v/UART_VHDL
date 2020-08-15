@@ -1,0 +1,70 @@
+library IEEE;
+use IEEE.STD_LOGIC_1164.ALL;
+entity UART is
+-- Port ( );
+	port(clk,rst,data_in,M1,M2,M3,M4 : in std_logic;
+	data_out,txdone,rxdone: out std_logic);
+end UART;
+
+	architecture Behavioral of UART is
+--component
+-- Transmitter component along with baud generator and Transmitter FIFO
+	component UART_Transmitter is
+-- Port ( );
+	port(clk,rst,w_uart,r_uart: in std_logic;
+	tx_in: in std_logic_vector(7 downto 0);
+	tx_out,txdone,full_tx,empty_tx : out std_logic);
+
+	end component;
+-- Receiver component along with baud generator and Receiver FIFO
+
+	component UART_Receiver is-- Port ( );
+
+	port(clk,rst,rxin,rd_uart : in std_logic;
+	empty,rxdone: out std_logic;
+	rxout: out std_logic_vector(7 downto 0));
+
+	end component;
+--memory
+	component Memory is
+-- Port ( );
+	port(clk, rst: in std_logic;
+	readwrite , mem_wr_en: in std_logic;
+	address : in std_logic_vector(7 downto 0);
+	dataout: in std_logic_vector(7 downto 0);
+	datain : out std_logic_vector(7 downto 0));
+
+	end component;
+-- UART Controller
+
+	component UART_Controller is
+	-- Port ( );
+	port(
+	clk: in std_logic;
+	M1,M2,M3,M4,rxdone,txdone,empty_tx,empty_rx,full_tx ,program_done : in std_logic;
+	fifo_data_in,mem_data_in: in std_logic_vector(7 downto 0);
+	fifo_data_out,mem_data_out: out std_logic_vector(7 downto 0);
+	mem_en,r_en,rd_uart_rx,wr_uart_tx,rd_uart_tx,mem_wr_en,start_prog_tx : out std_logic);
+
+	end component;
+--signals
+	signal done_sig,mem_en,r_en,rd_uart_rx,wr_uart_tx,rd_uart_tx,mem_wr_en,rxdone_sig,tx_donesig,full_tx,empty_tx,txdonesig : std_logic;
+	signal rxout_sig, fifo_in : std_logic_vector(7 downto 0);
+	signal empty_rx,start_prog_tx ,readwritesig ,program_done : std_logic;
+	signal data_in_sig, data, addr : std_logic_vector(7 downto 0);
+
+	begin
+	R : UART_Receiver port map(clk => clk, rst => rst, rxin => data_in, rd_uart => rd_uart_rx,empty =>empty_rx, rxout => rxout_sig,rxdone => rxdone_sig);
+
+	Con : UART_Controller port map(clk=>clk, M1 => M1, M2 => M2, M3 => M3, M4 => M4, rxdone =>rxdone_sig,txdone => txdonesig,empty_tx => empty_tx, 
+	empty_rx => empty_rx,full_tx =>full_tx,start_prog_tx =>start_prog_tx,program_done=>program_done,fifo_data_in => rxout_sig, mem_data_in => data_in_sig,
+	fifo_data_out => fifo_in, mem_data_out => data, mem_en => mem_en, r_en => r_en,rd_uart_rx => rd_uart_rx, wr_uart_tx => wr_uart_tx, rd_uart_tx =>
+	rd_uart_tx,mem_wr_en => mem_wr_en);
+
+	T : UART_Transmitter port map (clk => clk, rst => rst, w_uart => wr_uart_tx, r_uart => rd_uart_tx,tx_in => fifo_in, tx_out =>data_out, txdone => txdone,
+	full_tx => full_tx, empty_tx =>empty_tx);
+
+	M : Memory port map (clk => clk, rst => rst, mem_wr_en=>mem_wr_en, address =>addr,readwrite=>readwritesig, datain=>data_in_sig , dataout=>data);
+
+	txdone <= txdonesig;
+end Behavioral;

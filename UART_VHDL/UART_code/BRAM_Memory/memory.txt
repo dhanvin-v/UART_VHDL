@@ -1,0 +1,47 @@
+
+
+library IEEE;
+use IEEE.STD_LOGIC_1164.ALL;
+
+-- Uncomment the following library declaration if using
+-- arithmetic functions with Signed or Unsigned values
+use IEEE.NUMERIC_STD.ALL;
+
+-- Uncomment the following library declaration if instantiating
+-- any Xilinx leaf cells in this code.
+--library UNISIM;
+--use UNISIM.VComponents.all;
+
+entity Memory is
+--  Port ( );
+    port( 
+        address: in std_logic_vector(7 downto 0); 
+        dataout: in std_logic_vector(7 downto 0); 
+        readwrite: in std_logic; 
+        clk: in std_logic; 
+        rst: in std_logic;
+        datain: out std_logic_vector(7 downto 0));
+end Memory;
+
+architecture RAM of Memory is
+   type ram_type is array (0 to (2**address'length)-1) of std_logic_vector(datain'range);  
+   signal ramArray : ram_type;
+
+begin
+
+process(clk,rst) is
+	begin
+	   if Rst = '1' then
+                -- Clear Memory on Reset
+        ramArray <= (others => (others => '0'));
+	   end if;
+	   if rising_edge(Clk) then
+			if readwrite = '0' then
+			Datain <= ramArray(to_integer(unsigned(Address)));
+			else 
+			ramArray(to_integer(unsigned(Address))) <= Dataout;
+			end if; 
+		end if;
+		
+    end process;
+end RAM;
